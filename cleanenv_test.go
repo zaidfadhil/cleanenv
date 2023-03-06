@@ -565,16 +565,16 @@ func TestReadUpdateFunctions(t *testing.T) {
 
 func TestParseFile(t *testing.T) {
 	type configObject struct {
-		One int `yaml:"one" json:"one" toml:"one"`
-		Two int `yaml:"two" json:"two" toml:"two"`
+		One int `yaml:"one"`
+		Two int `yaml:"two"`
 	}
 	type config struct {
-		Number  int64        `yaml:"number" json:"number" toml:"number"`
-		Float   float64      `yaml:"float" json:"float" toml:"float"`
-		String  string       `yaml:"string" json:"string" toml:"string"`
-		Boolean bool         `yaml:"boolean" json:"boolean" toml:"boolean"`
-		Object  configObject `yaml:"object" json:"object" toml:"object"`
-		Array   []int        `yaml:"array" json:"array" toml:"array"`
+		Number  int64        `yaml:"number"`
+		Float   float64      `yaml:"float"`
+		String  string       `yaml:"string"`
+		Boolean bool         `yaml:"boolean"`
+		Object  configObject `yaml:"object"`
+		Array   []int        `yaml:"array"`
 	}
 
 	wantConfig := config{
@@ -610,51 +610,9 @@ array: [1, 2, 3]`,
 		},
 
 		{
-			name: "json",
-			file: `{
-	"number": 1,
-	"float": 2.3,
-	"string": "test",
-	"boolean": true,
-	"object": {
-		"one": 1,
-		"two": 2
-	},
-	"array": [1, 2, 3]
-}`,
-			ext:     "json",
-			want:    &wantConfig,
-			wantErr: false,
-		},
-
-		{
-			name: "toml",
-			file: `
-number = 1
-float = 2.3
-string = "test"
-boolean = true
-array = [1, 2, 3]
-[object]
-one = 1
-two = 2`,
-			ext:     "toml",
-			want:    &wantConfig,
-			wantErr: false,
-		},
-
-		{
 			name:    "unknown",
 			file:    "-",
 			ext:     "",
-			want:    nil,
-			wantErr: true,
-		},
-
-		{
-			name:    "parsing error",
-			file:    "-",
-			ext:     "json",
 			want:    nil,
 			wantErr: true,
 		},
@@ -989,10 +947,10 @@ func TestFUsage(t *testing.T) {
 
 func TestReadConfig(t *testing.T) {
 	type config struct {
-		Number    int64  `edn:"number" yaml:"number" env:"TEST_NUMBER" env-default:"1"`
-		String    string `edn:"string" yaml:"string" env:"TEST_STRING" env-default:"default"`
-		NoDefault string `edn:"no-default" yaml:"no-default" env:"TEST_NO_DEFAULT"`
-		NoEnv     string `edn:"no-env" yaml:"no-env" env-default:"default"`
+		Number    int64  `yaml:"number" env:"TEST_NUMBER" env-default:"1"`
+		String    string `yaml:"string" env:"TEST_STRING" env-default:"default"`
+		NoDefault string `yaml:"no-default" env:"TEST_NO_DEFAULT"`
+		NoEnv     string `yaml:"no-env" env-default:"default"`
 	}
 
 	tests := []struct {
@@ -1003,51 +961,6 @@ func TestReadConfig(t *testing.T) {
 		want    *config
 		wantErr bool
 	}{
-		{
-			name: "edn_only",
-			file: `
-			{
-				:number 2
-				:string "test"
-				:no-default "NoDefault"
-				:no-env "this"
-			}
-`,
-			ext: "edn",
-			env: nil,
-			want: &config{
-				Number:    2,
-				String:    "test",
-				NoDefault: "NoDefault",
-				NoEnv:     "this",
-			},
-			wantErr: false,
-		},
-
-		{
-			name: "edn_and_env",
-			file: `
-			{
-				:number 2
-				:string "test"
-				:no-default "NoDefault"
-				:no-env "this"
-			}
-`,
-			ext: "edn",
-			env: map[string]string{
-				"TEST_NUMBER": "3",
-				"TEST_STRING": "fromEnv",
-			},
-			want: &config{
-				Number:    3,
-				String:    "fromEnv",
-				NoDefault: "NoDefault",
-				NoEnv:     "this",
-			},
-			wantErr: false,
-		},
-
 		{
 			name: "yaml_only",
 			file: `
@@ -1127,14 +1040,6 @@ no-env: this
 			want:    nil,
 			wantErr: true,
 		},
-
-		{
-			name:    "parsing error",
-			file:    "-",
-			ext:     "json",
-			want:    nil,
-			wantErr: true,
-		},
 	}
 
 	for _, tt := range tests {
@@ -1191,8 +1096,8 @@ func TestTimeLocation(t *testing.T) {
 func TestSkipUnexportedField(t *testing.T) {
 	conf := struct {
 		Database struct {
-			Host        string `yaml:"host" env:"DB_HOST" env-description:"Database host"`
-			Port        string `yaml:"port" env:"DB_PORT" env-description:"Database port"`
+			Host string `yaml:"host" env:"DB_HOST" env-description:"Database host"`
+			Port string `yaml:"port" env:"DB_PORT" env-description:"Database port"`
 		} `yaml:"database"`
 		server struct {
 			Host string `yaml:"host" env:"SRV_HOST,HOST" env-description:"Server host" env-default:"localhost"`

@@ -1,7 +1,6 @@
 package cleanenv
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -13,10 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/BurntSushi/toml"
 	"github.com/joho/godotenv"
 	"gopkg.in/yaml.v3"
-	"olympos.io/encoding/edn"
 )
 
 const (
@@ -136,12 +133,6 @@ func parseFile(path string, cfg interface{}) error {
 	switch ext := strings.ToLower(filepath.Ext(path)); ext {
 	case ".yaml", ".yml":
 		err = parseYAML(f, cfg)
-	case ".json":
-		err = parseJSON(f, cfg)
-	case ".toml":
-		err = parseTOML(f, cfg)
-	case ".edn":
-		err = parseEDN(f, cfg)
 	case ".env":
 		err = parseENV(f, cfg)
 	default:
@@ -156,22 +147,6 @@ func parseFile(path string, cfg interface{}) error {
 // parseYAML parses YAML from reader to data structure
 func parseYAML(r io.Reader, str interface{}) error {
 	return yaml.NewDecoder(r).Decode(str)
-}
-
-// parseJSON parses JSON from reader to data structure
-func parseJSON(r io.Reader, str interface{}) error {
-	return json.NewDecoder(r).Decode(str)
-}
-
-// parseTOML parses TOML from reader to data structure
-func parseTOML(r io.Reader, str interface{}) error {
-	_, err := toml.NewDecoder(r).Decode(str)
-	return err
-}
-
-// parseEDN parses EDN from reader to data structure
-func parseEDN(r io.Reader, str interface{}) error {
-	return edn.NewDecoder(r).Decode(str)
 }
 
 // parseENV, in fact, doesn't fill the structure with environment variable values.
