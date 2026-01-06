@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/url"
 	"os"
 	"reflect"
@@ -620,7 +620,7 @@ array: [1, 2, 3]`,
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tmpFile, err := ioutil.TempFile(os.TempDir(), fmt.Sprintf("*.%s", tt.ext))
+			tmpFile, err := os.CreateTemp(os.TempDir(), fmt.Sprintf("*.%s", tt.ext))
 			if err != nil {
 				t.Fatal("cannot create temporary file:", err)
 			}
@@ -690,7 +690,7 @@ func TestParseFileEnv(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tmpFile, err := ioutil.TempFile(os.TempDir(), "*.env")
+			tmpFile, err := os.CreateTemp(os.TempDir(), "*.env")
 			if err != nil {
 				t.Fatal("cannot create temporary file:", err)
 			}
@@ -935,7 +935,7 @@ func TestFUsage(t *testing.T) {
 			}
 			var cfg testSingleEnv
 			FUsage(w, &cfg, tt.headerText, uFuncs...)()
-			gotRaw, _ := ioutil.ReadAll(w)
+			gotRaw, _ := io.ReadAll(w)
 			got := string(gotRaw)
 
 			if got != tt.want {
@@ -1044,7 +1044,7 @@ no-env: this
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tmpFile, err := ioutil.TempFile(os.TempDir(), fmt.Sprintf("*.%s", tt.ext))
+			tmpFile, err := os.CreateTemp(os.TempDir(), fmt.Sprintf("*.%s", tt.ext))
 			if err != nil {
 				t.Fatal("cannot create temporary file:", err)
 			}
