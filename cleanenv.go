@@ -89,7 +89,7 @@ type Updater interface {
 //	if err != nil {
 //	    ...
 //	}
-func ReadConfig(path string, cfg interface{}) error {
+func ReadConfig(path string, cfg any) error {
 	err := parseFile(path, cfg)
 	if err != nil {
 		return err
@@ -99,12 +99,12 @@ func ReadConfig(path string, cfg interface{}) error {
 }
 
 // ReadEnv reads environment variables into the structure.
-func ReadEnv(cfg interface{}) error {
+func ReadEnv(cfg any) error {
 	return readEnvVars(cfg, false)
 }
 
 // UpdateEnv rereads (updates) environment variables in the structure.
-func UpdateEnv(cfg interface{}) error {
+func UpdateEnv(cfg any) error {
 	return readEnvVars(cfg, true)
 }
 
@@ -121,7 +121,7 @@ func UpdateEnv(cfg interface{}) error {
 // - env
 //
 // - edn
-func parseFile(path string, cfg interface{}) error {
+func parseFile(path string, cfg any) error {
 	// open the configuration file
 	f, err := os.OpenFile(path, os.O_RDONLY|os.O_SYNC, 0)
 	if err != nil {
@@ -145,14 +145,14 @@ func parseFile(path string, cfg interface{}) error {
 }
 
 // parseYAML parses YAML from reader to data structure
-func parseYAML(r io.Reader, str interface{}) error {
+func parseYAML(r io.Reader, str any) error {
 	return yaml.NewDecoder(r).Decode(str)
 }
 
 // parseENV, in fact, doesn't fill the structure with environment variable values.
 // It just parses ENV file and sets all variables to the environment.
 // Thus, the structure should be filled at the next steps.
-func parseENV(r io.Reader, _ interface{}) error {
+func parseENV(r io.Reader, _ any) error {
 	vars, err := godotenv.Parse(r)
 	if err != nil {
 		return err
@@ -189,8 +189,8 @@ func parseSlice(valueType reflect.Type, value string, sep string, layout *string
 func parseMap(valueType reflect.Type, value string, sep string, layout *string) (*reflect.Value, error) {
 	mapValue := reflect.MakeMap(valueType)
 	if len(strings.TrimSpace(value)) != 0 {
-		pairs := strings.Split(value, sep)
-		for _, pair := range pairs {
+		pairs := strings.SplitSeq(value, sep)
+		for pair := range pairs {
 			kvPair := strings.SplitN(pair, ":", 2)
 			if len(kvPair) != 2 {
 				return nil, fmt.Errorf("invalid map item: %q", pair)
@@ -235,7 +235,7 @@ type parseFunc func(*reflect.Value, string, *string) error
 // Any specific supported struct can be added here
 var validStructs = map[reflect.Type]parseFunc{
 
-	reflect.TypeOf(time.Time{}): func(field *reflect.Value, value string, layout *string) error {
+	reflect.TypeFor[time.Time](): func(field *reflect.Value, value string, layout *string) error {
 		var l string
 		if layout != nil {
 			l = *layout
@@ -250,7 +250,7 @@ var validStructs = map[reflect.Type]parseFunc{
 		return nil
 	},
 
-	reflect.TypeOf(url.URL{}): func(field *reflect.Value, value string, _ *string) error {
+	reflect.TypeFor[url.URL](): func(field *reflect.Value, value string, _ *string) error {
 		val, err := url.Parse(value)
 		if err != nil {
 			return err
@@ -259,7 +259,7 @@ var validStructs = map[reflect.Type]parseFunc{
 		return nil
 	},
 
-	reflect.TypeOf(&time.Location{}): func(field *reflect.Value, value string, _ *string) error {
+	reflect.TypeFor[*time.Location](): func(field *reflect.Value, value string, _ *string) error {
 		loc, err := time.LoadLocation(value)
 		if err != nil {
 			return err
@@ -271,9 +271,9 @@ var validStructs = map[reflect.Type]parseFunc{
 }
 
 // readStructMetadata reads structure metadata (types, tags, etc.)
-func readStructMetadata(cfgRoot interface{}) ([]structMeta, error) {
+func readStructMetadata(cfgRoot any) ([]structMeta, error) {
 	type cfgNode struct {
-		Val    interface{}
+		Val    any
 		Prefix string
 	}
 
@@ -286,7 +286,7 @@ func readStructMetadata(cfgRoot interface{}) ([]structMeta, error) {
 		sPrefix := cfgStack[i].Prefix
 
 		// unwrap pointer
-		if s.Kind() == reflect.Ptr {
+		for s.Kind() == reflect.Pointer {
 			s = s.Elem()
 		}
 
@@ -374,7 +374,7 @@ func readStructMetadata(cfgRoot interface{}) ([]structMeta, error) {
 }
 
 // readEnvVars reads environment variables to the provided configuration structure
-func readEnvVars(cfg interface{}, update bool) error {
+func readEnvVars(cfg any, update bool) error {
 	metaInfo, err := readStructMetadata(cfg)
 	if err != nil {
 		return err
@@ -466,7 +466,7 @@ func parseValue(field reflect.Value, value, sep string, layout *string) error {
 		field.SetInt(number)
 
 	case reflect.Int64:
-		if valueType == reflect.TypeOf(time.Duration(0)) {
+		if valueType == reflect.TypeFor[time.Duration]() {
 			// try to parse time
 			d, err := time.ParseDuration(value)
 			if err != nil {
@@ -530,7 +530,7 @@ func parseValue(field reflect.Value, value, sep string, layout *string) error {
 
 // GetDescription returns a description of environment variables.
 // You can provide a custom header text.
-func GetDescription(cfg interface{}, headerText *string) (string, error) {
+func GetDescription(cfg any, headerText *string) (string, error) {
 	meta, err := readStructMetadata(cfg)
 	if err != nil {
 		return "", err
@@ -572,13 +572,13 @@ func GetDescription(cfg interface{}, headerText *string) (string, error) {
 // Usage returns a configuration usage help.
 // Other usage instructions can be wrapped in and executed before this usage function.
 // The default output is STDERR.
-func Usage(cfg interface{}, headerText *string, usageFuncs ...func()) func() {
+func Usage(cfg any, headerText *string, usageFuncs ...func()) func() {
 	return FUsage(os.Stderr, cfg, headerText, usageFuncs...)
 }
 
 // FUsage prints configuration help into the custom output.
 // Other usage instructions can be wrapped in and executed before this usage function
-func FUsage(w io.Writer, cfg interface{}, headerText *string, usageFuncs ...func()) func() {
+func FUsage(w io.Writer, cfg any, headerText *string, usageFuncs ...func()) func() {
 	return func() {
 		for _, fn := range usageFuncs {
 			fn()

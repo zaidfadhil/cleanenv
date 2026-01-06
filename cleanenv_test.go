@@ -83,8 +83,8 @@ func TestReadEnvVars(t *testing.T) {
 	tests := []struct {
 		name    string
 		env     map[string]string
-		cfg     interface{}
-		want    interface{}
+		cfg     any
+		want    any
 		wantErr bool
 	}{
 		{
@@ -338,8 +338,8 @@ func TestReadEnvVarsURL(t *testing.T) {
 	tests := []struct {
 		name    string
 		env     map[string]string
-		cfg     interface{}
-		want    interface{}
+		cfg     any
+		want    any
 		wantErr bool
 	}{
 		{
@@ -400,8 +400,8 @@ func TestReadEnvVarsTime(t *testing.T) {
 	tests := []struct {
 		name    string
 		env     map[string]string
-		cfg     interface{}
-		want    interface{}
+		cfg     any
+		want    any
 		wantErr bool
 	}{
 		{
@@ -516,8 +516,8 @@ func TestReadUpdateFunctions(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		cfg     interface{}
-		want    interface{}
+		cfg     any
+		want    any
 		wantErr bool
 	}{
 		{
@@ -766,7 +766,7 @@ func TestGetDescription(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		cfg     interface{}
+		cfg     any
 		header  *string
 		want    string
 		wantErr bool

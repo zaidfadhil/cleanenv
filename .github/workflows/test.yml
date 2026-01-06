@@ -11,22 +11,17 @@ on:
 
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         go-version:
-          - '1.19'
-          - '1.18'
-          - '1.17'
-          - '1.16'
-        os:
-          - ubuntu-latest
+          - '1.25'
     env:
       GO111MODULE: 'on'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - name: Setup Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go-version }}
       - name: Install dependencies
